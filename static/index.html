@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>くうちゅう えしりとり</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;900&display=swap"
+    />
+    <style>
+      :root {
+        --paper: #fff4d6;
+        --ink: #1d2b53;
+        --btn: #ff8c1a;
+        --warn: #ffd23f;
+        --ok: #2faa5a;
+        --ng: #c0392b;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #fff4d6;
+          --ink: #1d2b53;
+        }
+      } /* 紙の見立てなので暗くしない */
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          500 32px/1.4 "Zen Maru Gothic",
+          "Hiragino Maru Gothic ProN",
+          "Yu Gothic",
+          sans-serif;
+        overflow-x: hidden;
+      }
+      .s {
+        display: none;
+        min-height: 100vh;
+        padding: 24px 64px 24px;
+        grid-template-rows: auto 1fr auto;
+        gap: 16px;
+      }
+      .s.on {
+        display: grid;
+      }
+      .top {
+        font-size: 48px;
+        font-weight: 900;
+        text-align: center;
+        margin: 0;
+        padding-right: 260px;
+        padding-left: 260px;
+      }
+      .mid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        min-height: 0;
+      }
+      .bot {
+        display: flex;
+        justify-content: center;
+        gap: 48px;
+        flex-wrap: wrap;
+        padding-bottom: 8px;
+      }
+      button {
+        font: inherit;
+        font-weight: 900;
+        font-size: 36px;
+        min-height: 112px;
+        min-width: 260px;
+        padding: 0 40px;
+        border: 4px solid var(--ink);
+        border-radius: 28px;
+        background: var(--btn);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 8px 0 var(--ink);
+        transition:
+          transform 0.08s,
+          box-shadow 0.08s;
+      }
+      button:active {
+        transform: translateY(6px);
+        box-shadow: 0 2px 0 var(--ink);
+      }
+      button.sub {
+        background: #fff;
+        color: var(--ink);
+      }
+      button:disabled {
+        opacity: 0.35;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+      button:focus-visible {
+        outline: 6px solid var(--warn);
+      }
+      button.sel {
+        outline: 8px solid var(--warn);
+      }
+      .big {
+        font-size: 72px;
+        font-weight: 900;
+      }
+      .sm {
+        font-size: 24px;
+      }
+      #hand {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 9;
+        padding: 8px 20px;
+        border-radius: 999px;
+        border: 3px solid var(--ink);
+        font-size: 24px;
+        font-weight: 900;
+        background: var(--warn);
+      }
+      #hand.ok {
+        background: var(--ok);
+        color: #fff;
+      }
+      #cam {
+        position: fixed;
+        left: 16px;
+        bottom: 16px;
+        width: 200px;
+        border: 4px solid var(--ink);
+        border-radius: 16px;
+        transform: scaleX(-1);
+        background: #000;
+        z-index: 8;
+      }
+      #cur {
+        position: fixed;
+        width: 56px;
+        height: 56px;
+        margin: -28px 0 0 -28px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 99;
+        display: none;
+        background: conic-gradient(
+          var(--btn) calc(var(--k, 0) * 360deg),
+          rgba(29, 43, 83, 0.15) 0
+        );
+        border: 4px solid var(--ink);
+      }
+      .steps {
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .step {
+        background: #fff;
+        border: 4px solid var(--ink);
+        border-radius: 24px;
+        padding: 16px 28px;
+        text-align: center;
+        width: 300px;
+      }
+      .step b {
+        display: block;
+        font-size: 72px;
+        line-height: 1.2;
+      }
+      .paper {
+        background: #fff;
+        border: 4px solid var(--ink);
+        border-radius: 12px;
+        box-shadow: 10px 10px 0 rgba(29, 43, 83, 0.25);
+      }
+      canvas.cv {
+        width: min(100%, calc((100vh - 360px) * 4 / 3), 960px);
+        aspect-ratio: 4/3;
+        touch-action: none;
+        cursor: crosshair;
+      }
+      canvas.pv {
+        width: 100%;
+        aspect-ratio: 4/3;
+        display: block;
+      }
+      .row {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .fig {
+        width: 260px;
+        text-align: center;
+        font-size: 24px;
+      }
+      .fig.l {
+        width: 420px;
+      }
+      input {
+        font: inherit;
+        font-size: 48px;
+        font-weight: 900;
+        text-align: center;
+        width: min(100%, 720px);
+        padding: 8px 16px;
+        border: 4px solid var(--ink);
+        border-radius: 20px;
+        background: #fff;
+        color: var(--ink);
+      }
+      .pad {
+        display: grid;
+        gap: 6px;
+        width: min(100%, 940px);
+      }
+      .pad button {
+        min-width: 0;
+        min-height: 68px;
+        padding: 0;
+        font-size: 30px;
+        border-radius: 14px;
+        border-width: 3px;
+        box-shadow: 0 4px 0 var(--ink);
+        background: #fff;
+        color: var(--ink);
+      }
+      .pad button:empty {
+        visibility: hidden;
+      }
+      .timer {
+        width: min(100%, 640px);
+        height: 28px;
+        border: 4px solid var(--ink);
+        border-radius: 999px;
+        background: #fff;
+        overflow: hidden;
+      }
+      .timer i {
+        display: block;
+        height: 100%;
+        width: 100%;
+        background: var(--warn);
+      }
+      .sec {
+        font-size: 48px;
+        font-weight: 900;
+        background: var(--warn);
+        border: 4px solid var(--ink);
+        border-radius: 999px;
+        padding: 0 24px;
+      }
+      .seats {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .seat {
+        width: 190px;
+        height: 190px;
+        border: 4px solid var(--ink);
+        border-radius: 24px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+      }
+      .seat.e {
+        border-style: dashed;
+        background: transparent;
+        opacity: 0.5;
+      }
+      .link {
+        font-size: 28px;
+        background: #fff;
+        border: 4px dashed var(--ink);
+        border-radius: 16px;
+        padding: 8px 20px;
+        word-break: break-all;
+        text-align: center;
+      }
+      .card {
+        width: 300px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 900;
+        flex: none;
+      }
+      .mark {
+        font-size: 36px;
+        font-weight: 900;
+        border-radius: 12px;
+        padding: 0 12px;
+        display: inline-block;
+        color: #fff;
+      }
+      .mark.y {
+        background: var(--ok);
+      }
+      .mark.n {
+        background: var(--ng);
+      }
+      .scroll {
+        display: flex;
+        gap: 28px;
+        overflow-x: auto;
+        max-width: 100%;
+        padding: 12px 8px 24px;
+      }
+      .hint {
+        font-size: 28px;
+        background: #fff;
+        border: 3px solid var(--ink);
+        border-radius: 16px;
+        padding: 6px 20px;
+      }
+      @media (max-width: 900px) {
+        .s {
+          padding: 16px 16px;
+        }
+        .top {
+          font-size: 32px;
+          padding: 56px 0 0;
+        }
+        button {
+          font-size: 28px;
+          min-width: 160px;
+          padding: 0 20px;
+          min-height: 96px;
+        }
+        .big {
+          font-size: 56px;
+        }
+        .bot {
+          gap: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hand">てを カメラに みせてね</div>
+    <div id="cur"></div>
+    <video id="cam" playsinline muted></video>
+
+    <!-- タイトル -->
+    <section class="s on" id="title">
+      <h1 class="top">くうちゅう えしりとり</h1>
+      <div class="mid">
+        <div class="steps">
+          <div class="step"><b>☝️</b>ゆびで くうちゅうに えを かく</div>
+          <div class="step"><b>🤔</b>なにを かいたか こたえる</div>
+          <div class="step"><b>🔗</b>しりとりが つながるかな？</div>
+        </div>
+      </div>
+      <div class="bot">
+        <button id="bCreate">🏠＋ へやを つくる</button>
+        <button id="bJoin" style="background: var(--btn)">
+          🚪➡ へやに はいる
+        </button>
+      </div>
+    </section>
+
+    <!-- 部屋に入る -->
+    <section class="s" id="join">
+      <h1 class="top">へやの ばんごうを いれてね</h1>
+      <div class="mid">
+        <input
+          id="codeIn"
+          inputmode="numeric"
+          maxlength="4"
+          placeholder="れい：1234"
+          autocomplete="off"
+        />
+        <div
+          class="pad"
+          id="codePad"
+          style="grid-template-columns: repeat(5, 1fr); width: min(100%, 640px)"
+        ></div>
+      </div>
+      <div class="bot">
+        <button class="sub" id="jBack">もどる</button
+        ><button id="jGo">はいる</button>
+      </div>
+    </section>
+
+    <!-- キャラをつくる -->
+    <section class="s" id="char">
+      <h1 class="top">じぶんの しるしを きめよう</h1>
+      <div class="mid">
+        <div class="row" style="align-items: center; gap: 48px">
+          <div class="seat" id="preview"></div>
+          <div>
+            <div class="row" id="shapes" style="margin-bottom: 16px"></div>
+            <div class="row" id="colors"></div>
+          </div>
+        </div>
+        <input
+          id="nameIn"
+          maxlength="6"
+          placeholder="なまえ"
+          autocomplete="off"
+        />
+        <div
+          class="pad"
+          id="namePad"
+          style="grid-template-columns: repeat(11, minmax(0, 1fr))"
+        ></div>
+      </div>
+      <div class="bot">
+        <button class="sub" id="nDel">1もじけす</button
+        ><button id="nOk">これで OK</button>
+      </div>
+    </section>
+
+    <!-- ロビー -->
+    <section class="s" id="lobby">
+      <h1 class="top">なかまを まとう</h1>
+      <div class="mid">
+        <div>
+          このリンクを ともだちに おくってね（ばんごう <b id="codeTxt"></b>）
+        </div>
+        <div class="link" id="linkTxt"></div>
+        <button
+          class="sub"
+          id="bCopy"
+          style="min-height: 72px; font-size: 28px"
+        >
+          リンクを コピー
+        </button>
+        <div class="seats" id="seats"></div>
+        <div id="roundBox" class="row" style="align-items: center"></div>
+      </div>
+      <div class="bot" id="lobbyBot"></div>
+    </section>
+
+    <!-- じゅんび -->
+    <section class="s" id="prepare">
+      <h1 class="top" id="pTop"></h1>
+      <div class="mid" id="pMid"></div>
+      <div class="bot" id="pBot"></div>
+    </section>
+
+    <!-- かく / みる -->
+    <section class="s" id="draw">
+      <h1 class="top" id="dTop"></h1>
+      <div class="mid">
+        <div
+          class="row"
+          style="
+            flex-wrap: nowrap;
+            align-items: flex-start;
+            width: 100%;
+            justify-content: center;
+          "
+        >
+          <canvas class="cv paper" id="cv" width="800" height="600"></canvas>
+          <div id="dSide" class="fig" style="flex: none"></div>
+        </div>
+        <div class="row" style="align-items: center">
+          <div class="sec" id="dSec">30</div>
+          <div class="timer"><i id="dBar"></i></div>
+        </div>
+        <div class="hint" id="dHint"></div>
+      </div>
+      <div class="bot" id="dBot"></div>
+    </section>
+
+    <!-- こたえる -->
+    <section class="s" id="answer">
+      <h1 class="top" id="aTop"></h1>
+      <div class="mid">
+        <div class="row" style="align-items: center">
+          <div class="sec" id="aSec">15</div>
+          <div class="timer"><i id="aBar"></i></div>
+        </div>
+        <div class="row" style="align-items: center; flex-wrap: nowrap">
+          <div class="fig l">
+            <canvas class="pv paper" id="aPv" width="400" height="300"></canvas>
+          </div>
+          <div id="aInputBox">
+            <input
+              id="ansIn"
+              maxlength="12"
+              placeholder="こたえ"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+        <div
+          class="pad"
+          id="ansPad"
+          style="grid-template-columns: repeat(11, minmax(0, 1fr))"
+        ></div>
+      </div>
+      <div class="bot" id="aBot">
+        <button class="sub" id="aDel">1もじけす</button
+        ><button id="aOk">けってい</button>
+      </div>
+    </section>
+
+    <!-- けっか -->
+    <section class="s" id="result">
+      <h1 class="top" id="rTop"></h1>
+      <div class="mid"><div class="scroll" id="rList"></div></div>
+      <div class="bot" id="rBot"></div>
+    </section>
+
+    <script type="module">
+      const $ = (s) => document.querySelector(s);
+      const SH = {
+        circle: '<circle cx="20" cy="20" r="16"/>',
+        square: '<rect x="5" y="5" width="30" height="30" rx="4"/>',
+        triangle: '<polygon points="20,4 37,35 3,35"/>',
+        star: '<polygon points="20,3 25,15 38,16 28,25 31,38 20,31 9,38 12,25 2,16 15,15"/>',
+      };
+      const icon = (s, c, z = 64) =>
+        `<svg width="${z}" height="${z}" viewBox="0 0 40 40" fill="${c || "#ddd"}" stroke="#1d2b53" stroke-width="2.5" stroke-linejoin="round">${SH[s || "circle"]}</svg>`;
+      const DRAW_SEC = 30,
+        ANS_SEC = 15;
+      const KANA = [
+        "あいうえお",
+        "かきくけこ",
+        "さしすせそ",
+        "たちつてと",
+        "なにぬねの",
+        "はひふへほ",
+        "まみむめも",
+        "や ゆ よ",
+        "らりるれろ",
+        "わをん゛゜",
+        "ゃゅょっー",
+      ];
+      let ws,
+        S = null,
+        me = null,
+        COLORS = [],
+        cName = "",
+        cShape = "circle",
+        cColor = "",
+        rounds = 2,
+        live = [],
+        st = [],
+        cur = null,
+        dirty = false;
+      let dl = 0,
+        phaseKey = "",
+        hand = null,
+        g = null;
+
+      /* ---------- 画面 ---------- */
+      function show(id) {
+        document
+          .querySelectorAll(".s")
+          .forEach((e) => e.classList.toggle("on", e.id === id));
+      }
+      function paint(cv, strokes, color) {
+        const c = cv.getContext("2d"),
+          w = cv.width,
+          h = cv.height;
+        c.fillStyle = "#fff";
+        c.fillRect(0, 0, w, h);
+        c.strokeStyle = color || "#1d2b53";
+        c.lineWidth = w / 90;
+        c.lineCap = c.lineJoin = "round";
+        for (const s of strokes || []) {
+          c.beginPath();
+          s.forEach(([x, y], i) =>
+            i ? c.lineTo(x * w, y * h) : c.moveTo(x * w, y * h),
+          );
+          if (s.length === 1) c.lineTo(s[0][0] * w + 0.1, s[0][1] * h);
+          c.stroke();
+        }
+      }
+      const pl = (id) =>
+        S.players.find((p) => p.id === id) || {
+          name: "?",
+          shape: "circle",
+          color: "#999",
+        };
+      const who = (p) => `${icon(p.shape, p.color, 56)}`;
+      function fig(t, big) {
+        // 前の絵のカード
+        const p = pl(t.pid);
+        return `<div class="fig ${big ? "l" : ""}"><canvas class="pv paper" width="400" height="300" data-c="${p.color}" data-i="${S.turns.indexOf(t)}"></canvas></div>`;
+      }
+      function paintAll(root) {
+        root
+          .querySelectorAll("canvas.pv[data-i]")
+          .forEach((c) => paint(c, S.turns[+c.dataset.i].strokes, c.dataset.c));
+      }
+
+      function render() {
+        const ph = S.phase,
+          mine = S.players.find((p) => p.id === me),
+          isHost = S.host === me;
+        if (!mine) {
+          return;
+        }
+        const key = ph + S.turn;
+        if (key !== phaseKey) {
+          phaseKey = key;
+          dl = Date.now() + S.left * 1000;
+          st = [];
+          live = [];
+          cur = null;
+          if (ph === "answer") $("#ansIn").value = "";
+        }
+        if (ph === "lobby") {
+          if (!mine.color) {
+            show("char");
+            renderChar();
+          } else {
+            show("lobby");
+            renderLobby(isHost);
+          }
+          return;
+        }
+        const d = pl(S.drawer),
+          mineTurn = S.drawer === me;
+        if (ph === "prepare") {
+          show("prepare");
+          $("#pTop").innerHTML = mineTurn
+            ? "あなたの ばん！"
+            : `${who(d)} ${d.name} の ばんだよ`;
+          let h = "";
+          if (S.turn === 0)
+            h = `<div class="big">「${S.topic}」</div><div>から はじまる えを かこう</div>`;
+          else {
+            const a = S.turns[S.turn - 1],
+              b = S.turns[S.turn - 2];
+            h = `<div class="row">${b ? fig(b) : ""}${fig(a, 1)}</div><div class="big">こたえは ${a.len} もじ</div><div>さいごの もじから はじまる えを かこう</div>`;
+          }
+          $("#pMid").innerHTML = mineTurn
+            ? h
+            : `<div class="big">まっててね</div>`;
+          $("#pBot").innerHTML = mineTurn
+            ? '<button id="bBegin">かきはじめる</button>'
+            : "";
+          if (mineTurn) $("#bBegin").onclick = () => send({ t: "begin" });
+          paintAll($("#pMid"));
+        } else if (ph === "draw") {
+          show("draw");
+          $("#dTop").innerHTML = mineTurn
+            ? `${who(d)} かこう！`
+            : `${who(d)} ${d.name} が かいているよ`;
+          const a = S.turns[S.turn - 1];
+          $("#dSide").innerHTML =
+            mineTurn && a
+              ? fig(a) + "<div>まえの え</div>"
+              : S.turn === 0 && mineTurn
+                ? `<div class="big">「${S.topic}」</div>`
+                : "";
+          $("#dHint").textContent = mineTurn
+            ? "☝️ひとさしゆび：かく　✌️ピース：けす　✊グー：やすむ　（マウスでも かけるよ）"
+            : "なにを かいているかな？";
+          $("#dBot").innerHTML = mineTurn
+            ? '<button id="bDone">かきおわり</button>'
+            : "";
+          if (mineTurn)
+            $("#bDone").onclick = () => {
+              send({ t: "stroke", strokes: st });
+              send({ t: "done" });
+            };
+          if (!mineTurn) {
+            live = S.strokes;
+          }
+          paintAll($("#dSide"));
+          drawCv();
+        } else if (ph === "answer") {
+          show("answer");
+          $("#aTop").innerHTML = mineTurn
+            ? "なにを かいたかな？"
+            : `${who(d)} ${d.name} が こたえを いれているよ`;
+          paint($("#aPv"), lastStrokes, d.color);
+          $("#aInputBox").style.display =
+            $("#ansPad").style.display =
+            $("#aBot").style.display =
+              mineTurn ? "" : "none";
+        } else if (ph === "result") {
+          show("result");
+          const ok = S.turns.filter((t) => t.ok).length,
+            n = S.turns.length;
+          $("#rTop").textContent =
+            ok === n
+              ? `ぜんぶ つながったよ！すごい！`
+              : ok === 0
+                ? `つながらなかった… でも たのしかったね`
+                : `${n}つのうち ${ok}つ つながったよ！`;
+          let prev = S.topic;
+          $("#rList").innerHTML = S.turns
+            .map((t, i) => {
+              const p = pl(t.pid);
+              const h = `<div class="card"><canvas class="pv paper" width="400" height="300" data-c="${p.color}" data-i="${i}"></canvas>
+      <div>${icon(p.shape, p.color, 40)} ${p.name}</div><div class="big" style="font-size:48px">${t.ans || "(なし)"}</div>
+      <div class="sm">${i ? `まえの こたえから` : `「${S.topic}」から`}</div><span class="mark ${t.ok ? "y" : "n"}">${t.ok ? "○ つながった" : "× つながらなかった"}</span></div>`;
+              return h;
+            })
+            .join("");
+          paintAll($("#rList"));
+          $("#rBot").innerHTML =
+            (isHost
+              ? '<button id="bAgain">もういっかい</button>'
+              : "<div>おなじメンバーで もういっかい あそべるよ（へやを つくった ひとが えらぶよ）</div>") +
+            '<button class="sub" id="bEnd">おわる</button>';
+          if (isHost) $("#bAgain").onclick = () => send({ t: "again" });
+          $("#bEnd").onclick = () => {
+            location.href = "/";
+          };
+        }
+      }
+      let lastStrokes = [];
+      function drawCv() {
+        // かく画面のキャンバスを描き直す
+        if (!S || S.phase !== "draw") return;
+        const d = pl(S.drawer);
+        paint($("#cv"), S.drawer === me ? st : live, d.color);
+      }
+      function renderChar() {
+        const used = new Set(
+          S.players.filter((p) => p.id !== me).map((p) => p.color),
+        );
+        if (!cColor || used.has(cColor))
+          cColor = COLORS.find((c) => !used.has(c));
+        $("#shapes").innerHTML = Object.keys(SH)
+          .map(
+            (s) =>
+              `<button class="sub ${s === cShape ? "sel" : ""}" data-s="${s}" style="min-width:112px;padding:0">${icon(s, cColor, 64)}</button>`,
+          )
+          .join("");
+        $("#colors").innerHTML = COLORS.map(
+          (c) =>
+            `<button data-c="${c}" ${used.has(c) ? "disabled" : ""} class="${c === cColor ? "sel" : ""}" style="min-width:96px;min-height:96px;padding:0;background:${c}"></button>`,
+        ).join("");
+        $("#shapes").onclick = (e) => {
+          const b = e.target.closest("button");
+          if (b) {
+            cShape = b.dataset.s;
+            renderChar();
+          }
+        };
+        $("#colors").onclick = (e) => {
+          const b = e.target.closest("button");
+          if (b && !b.disabled) {
+            cColor = b.dataset.c;
+            renderChar();
+          }
+        };
+        $("#preview").innerHTML =
+          icon(cShape, cColor, 96) +
+          `<div class="sm">${$("#nameIn").value || "なまえ"}</div>`;
+      }
+      function renderLobby(isHost) {
+        const url = `${location.origin}/?room=${S.code}`;
+        $("#codeTxt").textContent = S.code;
+        $("#linkTxt").textContent = url;
+        let h = "";
+        for (let i = 0; i < 4; i++) {
+          const p = S.players[i];
+          h += p
+            ? `<div class="seat">${icon(p.shape, p.color, 80)}<div>${i + 1}. ${p.name}${p.id === S.host ? " 👑" : ""}</div></div>`
+            : `<div class="seat e">あと ひとり</div>`;
+        }
+        $("#seats").innerHTML = h;
+        const ready = S.players.length >= 2 && S.players.every((p) => p.color);
+        $("#roundBox").innerHTML = isHost
+          ? `<span>なんかい あそぶ？</span>` +
+            [2, 3, 4]
+              .map(
+                (n) =>
+                  `<button class="sub ${n === rounds ? "sel" : ""}" data-n="${n}" style="min-width:112px;padding:0">${n}かい</button>`,
+              )
+              .join("")
+          : "";
+        $("#roundBox").onclick = (e) => {
+          const b = e.target.closest("button");
+          if (b) {
+            rounds = +b.dataset.n;
+            renderLobby(isHost);
+          }
+        };
+        $("#lobbyBot").innerHTML = isHost
+          ? `<button id="bStart" ${ready ? "" : "disabled"}>${ready ? "ゲームスタート" : "2にん いじょう ひつよう"}</button>`
+          : '<div class="big" style="font-size:40px">はじまるのを まっています</div>';
+        if (isHost) $("#bStart").onclick = () => send({ t: "start", rounds });
+      }
+
+      /* ---------- 50音パッド ---------- */
+      function makePad(el, input, rows) {
+        const grid = [];
+        for (let r = 0; r < 5; r++)
+          for (const col of rows) grid.push((col[r] || " ").trim());
+        el.innerHTML = grid.map((k) => `<button>${k}</button>`).join("");
+        el.onclick = (e) => {
+          const b = e.target.closest("button");
+          if (!b || !b.textContent) return;
+          ins(input, b.textContent);
+        };
+      }
+      function ins(input, ch) {
+        let v = input.value;
+        if (ch === "゛" || ch === "゜") {
+          const l = v.slice(-1);
+          const n = (l + (ch === "゛" ? "\u3099" : "\u309A")).normalize("NFC");
+          if (l && n.length === 1) v = v.slice(0, -1) + n;
+        } else if (v.length < input.maxLength) v += ch;
+        input.value = v;
+        input.dispatchEvent(new Event("input"));
+      }
+      const del = (i) => {
+        i.value = i.value.slice(0, -1);
+        i.dispatchEvent(new Event("input"));
+      };
+      makePad($("#namePad"), $("#nameIn"), KANA);
+      makePad($("#ansPad"), $("#ansIn"), KANA);
+      $("#codePad").innerHTML = [..."1234567890"]
+        .map((d) => `<button>${d}</button>`)
+        .join("");
+      $("#codePad").onclick = (e) => {
+        const b = e.target.closest("button");
+        if (b) ins($("#codeIn"), b.textContent);
+      };
+      $("#nameIn").oninput = () => renderChar();
+      $("#nDel").onclick = () => del($("#nameIn"));
+      $("#aDel").onclick = () => del($("#ansIn"));
+      $("#nOk").onclick = () =>
+        send({
+          t: "char",
+          name: $("#nameIn").value,
+          shape: cShape,
+          color: cColor,
+        });
+      $("#ansIn").oninput = (e) => {
+        const i = e.target;
+        if (!e.isComposing)
+          i.value = i.value.replace(/[^\u3041-\u3096ー]/g, "");
+        send({ t: "draft", text: i.value });
+      };
+      $("#aOk").onclick = () => send({ t: "answer", text: $("#ansIn").value });
+      $("#ansIn").onkeydown = (e) => {
+        if (e.key === "Enter" && !e.isComposing) $("#aOk").click();
+      };
+      $("#bCopy").onclick = async () => {
+        try {
+          await navigator.clipboard.writeText($("#linkTxt").textContent);
+          $("#bCopy").textContent = "コピーしたよ！";
+        } catch {
+          $("#bCopy").textContent = "リンクを せんたくしてね";
+        }
+      };
+
+      /* ---------- 通信 ---------- */
+      function send(o) {
+        if (ws && ws.readyState === 1) ws.send(JSON.stringify(o));
+      }
+      function connect(create, room) {
+        ws = new WebSocket(
+          (location.protocol === "https:" ? "wss://" : "ws://") +
+            location.host +
+            "/ws",
+        );
+        ws.onopen = () => send({ t: "join", create, room });
+        ws.onmessage = (e) => {
+          const m = JSON.parse(e.data);
+          if (m.t === "hello") {
+            me = m.you;
+            COLORS = m.colors;
+          } else if (m.t === "state") {
+            if (S && S.phase === "draw" && m.s.phase === "answer")
+              lastStrokes = S.drawer === me ? st.slice() : live.slice();
+            S = m.s;
+            render();
+          } else if (m.t === "live") {
+            live = m.strokes;
+            drawCv();
+          } else if (m.t === "err") {
+            alert(m.m);
+            if (!m.stay) {
+              history.replaceState(null, "", "/");
+              if (!me) show("title");
+            }
+          }
+        };
+        ws.onclose = () => {
+          if (me) {
+            alert("つながりが きれたよ。さいしょに もどるよ");
+            location.href = "/";
+          }
+        };
+      }
+      $("#bCreate").onclick = () => connect(true);
+      $("#bJoin").onclick = () => {
+        $("#codeIn").value = "";
+        show("join");
+      };
+      $("#jBack").onclick = () => show("title");
+      $("#jGo").onclick = () => {
+        if ($("#codeIn").value.length === 4) connect(false, $("#codeIn").value);
+      };
+      const q = new URLSearchParams(location.search).get("room");
+      if (q) connect(false, q); // ホストのURLから来た人は、そのまま部屋に入る
+
+      /* ---------- タイマー ---------- */
+      setInterval(() => {
+        if (!S || !["draw", "answer"].includes(S.phase)) return;
+        const rem = Math.max(0, (dl - Date.now()) / 1000),
+          tot = S.phase === "draw" ? DRAW_SEC : ANS_SEC,
+          p = S.phase === "draw" ? "d" : "a";
+        $("#" + p + "Sec").textContent = Math.ceil(rem);
+        $("#" + p + "Bar").style.width = (rem / tot) * 100 + "%";
+      }, 100);
+      setInterval(() => {
+        if (dirty && S && S.phase === "draw" && S.drawer === me) {
+          send({ t: "stroke", strokes: st });
+          dirty = false;
+        }
+      }, 100);
+
+      /* ---------- マウス（手がなくても描ける） ---------- */
+      const cv = $("#cv");
+      const pt = (e) => {
+        const r = cv.getBoundingClientRect();
+        return [
+          +((e.clientX - r.left) / r.width).toFixed(3),
+          +((e.clientY - r.top) / r.height).toFixed(3),
+        ];
+      };
+      const mine = () => S && S.phase === "draw" && S.drawer === me;
+      cv.onpointerdown = (e) => {
+        if (!mine()) return;
+        cv.setPointerCapture(e.pointerId);
+        cur = [pt(e)];
+        st.push(cur);
+        dirty = true;
+        drawCv();
+      };
+      cv.onpointermove = (e) => {
+        if (cur && mine()) {
+          cur.push(pt(e));
+          dirty = true;
+          drawCv();
+        }
+      };
+      cv.onpointerup = () => {
+        cur = null;
+      };
+
+      /* ---------- 手の認識（カメラ映像はこの端末の中だけで処理する） ---------- */
+      const cam = $("#cam"),
+        curEl = $("#cur"),
+        handEl = $("#hand");
+      let hl = null,
+        lastT = -1,
+        sx = 0.5,
+        sy = 0.5,
+        dw = { b: null, t: 0 };
+      async function initHand() {
+        try {
+          cam.srcObject = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 480, facingMode: "user" },
+          });
+          await cam.play();
+        } catch (e) {
+          handEl.textContent = "カメラが つかえないよ（マウスで あそべるよ）";
+          cam.style.display = "none";
+          return;
+        }
+        try {
+          const V =
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+          const { HandLandmarker, FilesetResolver } = await import(
+            V + "/vision_bundle.mjs"
+          );
+          const fs = await FilesetResolver.forVisionTasks(V + "/wasm");
+          const model =
+            "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+          for (const delegate of ["GPU", "CPU"]) {
+            try {
+              hl = await HandLandmarker.createFromOptions(fs, {
+                baseOptions: { modelAssetPath: model, delegate },
+                runningMode: "VIDEO",
+                numHands: 1,
+              });
+              break;
+            } catch (e) {}
+          }
+          if (!hl) throw 0;
+          requestAnimationFrame(loop);
+        } catch (e) {
+          handEl.textContent =
+            "てのにんしきを よみこめないよ（マウスで あそべるよ）";
+        }
+      }
+      function loop() {
+        requestAnimationFrame(loop);
+        if (cam.readyState < 2 || cam.currentTime === lastT) return;
+        lastT = cam.currentTime;
+        const lm = hl.detectForVideo(cam, performance.now()).landmarks?.[0];
+        if (!lm) {
+          hand = null;
+          g = null;
+          cur = null;
+          handEl.textContent = "てを カメラに みせてね";
+          handEl.className = "";
+          curEl.style.display = "none";
+          return;
+        }
+        handEl.textContent = "てが みえてるよ";
+        handEl.className = "ok";
+        const d = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y),
+          ext = (t, p) => d(0, t) > d(0, p) * 1.1;
+        const [i, m, r, k] = [ext(8, 6), ext(12, 10), ext(16, 14), ext(20, 18)];
+        g =
+          i && !m && !r && !k
+            ? "draw"
+            : i && m && !r && !k
+              ? "peace"
+              : !i && !m && !r && !k
+                ? "fist"
+                : "other";
+        const fx = g === "peace" ? (lm[8].x + lm[12].x) / 2 : lm[8].x,
+          fy = g === "peace" ? (lm[8].y + lm[12].y) / 2 : lm[8].y;
+        const x = Math.min(1, Math.max(0, (1 - fx - 0.1) / 0.8)),
+          y = Math.min(1, Math.max(0, (fy - 0.1) / 0.8)); // 鏡うつし
+        sx += (x - sx) * 0.5;
+        sy += (y - sy) * 0.5;
+        const px = sx * innerWidth,
+          py = sy * innerHeight;
+        curEl.style.display = "block";
+        curEl.style.left = px + "px";
+        curEl.style.top = py + "px";
+        let drawing = false;
+        if (mine()) {
+          const R = cv.getBoundingClientRect(),
+            cx = (px - R.left) / R.width,
+            cy = (py - R.top) / R.height,
+            inside = cx >= 0 && cx <= 1 && cy >= 0 && cy <= 1;
+          if (inside && g === "draw") {
+            drawing = true;
+            if (!cur) {
+              cur = [];
+              st.push(cur);
+            }
+            cur.push([+cx.toFixed(3), +cy.toFixed(3)]);
+            dirty = true;
+            drawCv();
+          } else {
+            cur = null;
+          }
+          if (inside && g === "peace") {
+            const n = st.length;
+            st = st.filter(
+              (s) =>
+                !s.some(([a, b]) => Math.hypot((a - cx) * 1.33, b - cy) < 0.09),
+            );
+            if (st.length !== n) {
+              dirty = true;
+              drawCv();
+            }
+          }
+        }
+        // ゆびを ボタンの うえに 0.9びょう とめると おせる
+        let b = null;
+        if (!drawing && g === "draw") {
+          const el = document.elementFromPoint(px, py);
+          b = el && el.closest("button:not(:disabled)");
+        }
+        if (b !== dw.b) {
+          dw.b = b;
+          dw.t = performance.now();
+        }
+        const kk = b ? Math.min(1, (performance.now() - dw.t) / 900) : 0;
+        curEl.style.setProperty("--k", kk);
+        if (kk >= 1) {
+          dw.b = null;
+          b.click();
+        }
+      }
+      initHand();
+    </script>
+  </body>
+</html>
